@@ -22,7 +22,7 @@ class VideoApiTest extends TestCase
             'user_id' => 1,
         ]);
         Video::factory()->create([
-            'title' => 'testVideo1',
+            'title' => 'testVideo2',
             'user_id' => 1,
         ]);
 
@@ -31,8 +31,33 @@ class VideoApiTest extends TestCase
 
         // assert
         $response->assertStatus(200)
-            ->assertJsonCount(2); // expect 2 records
+            ->assertJsonCount(2, 'data'); // expect 2 records
     }
+
+    /**
+     * @test
+     * 動画を登録できる
+     */
+    public function test_it_can_store_a_video()
+    {
+        // data define
+        $data = [
+            'user_id' => 1,
+            'title' => 'this is first post',
+            'description' => 'dear coder, i\'ve started learning tdd',
+            'published_at' => '2025-12-07 12:00:00'
+        ];
+
+        $response = $this->postJson('/api/videos', $data);
+
+        $response->assertStatus(201)
+            ->assertJsonFragment(['title' => 'this is first post']);
+
+        $this->assertDatabaseHas('videos', [
+            'title' => 'this is first post'
+        ]);
+    }
+
     /** 
      * A basic feature test example.
      */

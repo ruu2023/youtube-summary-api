@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\VideoController;
 
 Route::get('/videos', [VideoController::class, 'index']);
+Route::post('/videos', [VideoController::class, 'store']);
 
 Route::get('/user', function (Request $request) {
     return $request->user();
