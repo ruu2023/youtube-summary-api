@@ -11,7 +11,6 @@ class VideoApiTest extends TestCase
 {
     use RefreshDatabase; // refresh db each test
     /**
-     * @test
      * 動画一覧をJSONで取得できる
      */
     public function it_can_fetch_list_of_videos()
@@ -35,7 +34,6 @@ class VideoApiTest extends TestCase
     }
 
     /**
-     * @test
      * 動画を登録できる
      */
     public function test_it_can_store_a_video()
@@ -58,6 +56,40 @@ class VideoApiTest extends TestCase
         ]);
     }
 
+    /**
+     * 動画の詳細を取得できる
+     */
+    public function test_it_can_fetch_single_video()
+    {
+        // create
+        $video = Video::factory()->create([
+            'title' => 'test title'
+        ]);
+
+        // fetch a video
+        $response = $this->getJson("/api/videos/{$video->id}");
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'data' => [
+                    'id' => $video->id,
+                    'title' => 'test title'
+                ]
+                ]);
+    }
+
+    /**
+     * 動画を削除できる
+     */
+    public function test_it_can_delete_a_video()
+    {
+        $video = Video::factory()->create();
+
+        $response = $this->deleteJson("/api/videos/{$video->id}"); 
+        $response->assertStatus(204);
+
+        $this->assertDatabaseMissing('videos', ['id' => $video->id]);
+    }
     /** 
      * A basic feature test example.
      */

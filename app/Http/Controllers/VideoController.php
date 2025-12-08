@@ -31,4 +31,18 @@ class VideoController extends Controller
             ->response()
             ->setStatusCode(201);   
     }
+
+    // show
+    public function show(Video $video)
+    {
+        return new VideoResource($video);
+    }
+
+    // destroy
+    public function destroy(Video $video)
+    {
+        $video->delete();
+        // 204
+        return response()->noContent();
+    }
 }
