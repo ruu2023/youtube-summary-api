@@ -9,9 +9,20 @@ use Illuminate\Http\Request;
 class VideoController extends Controller
 {
     // get
-    public function index() 
+    public function index(Request $request) 
     {
-        return VideoResource::collection(Video::all());
+        $query = Video::query();
+
+        if($keyword = $request->input('q')) {
+            $query->where(function ($q) use ($keyword) {
+                $q->where('title', 'like', "%{$keyword}%")
+                    ->orwhere('description', 'like', "%{$keyword}%");
+            });
+        }
+
+        $video = $query->latest('published_at')->get();
+
+        return VideoResource::collection($video);
     }
 
     // store

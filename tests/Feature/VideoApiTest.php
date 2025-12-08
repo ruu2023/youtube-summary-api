@@ -90,6 +90,31 @@ class VideoApiTest extends TestCase
 
         $this->assertDatabaseMissing('videos', ['id' => $video->id]);
     }
+
+    /**
+     * 検索機能
+     * 指定の言葉がタイトル化概要欄に含まれている
+     */
+    public function test_it_can_search_videos_by_keyword()
+    {
+        // define
+        Video::factory()->create([
+            'title' => 'minecraft seed change',
+            'description' => 'playing minecraft'
+        ]);
+        Video::factory()->create([
+            'title' => 'apex legends',
+            'description' => 'playing apex'
+        ]);
+
+        $response = $this->getJson('/api/videos?q=mine');
+
+        $response->assertStatus(200)
+            ->assertJsonCount(1, 'data')
+            ->assertJsonFragment(['title' => 'minecraft seed change'])
+            ->assertJsonMissing(['title' => 'apex legends']);
+    }
+
     /** 
      * A basic feature test example.
      */
