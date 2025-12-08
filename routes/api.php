@@ -8,6 +8,7 @@ Route::get('/videos', [VideoController::class, 'index']);
 Route::post('/videos', [VideoController::class, 'store']);
 Route::get('/videos/{video}', [VideoController::class, 'show']);
 Route::delete('/videos/{video}', [VideoController::class, 'destroy']);
+Route::post('/videos/import', [VideoController::class, 'import']);
 
 Route::get('/user', function (Request $request) {
     return $request->user();

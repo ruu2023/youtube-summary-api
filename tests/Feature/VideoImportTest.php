@@ -14,14 +14,14 @@ class VideoImportTest extends TestCase
     public function test_it_can_import_video_from_youtube()
     {
         Http::fake([
-            'www.googleapi.com/*' => Http::response([
+            'www.googleapis.com/*' => Http::response([
                 'items' => [
                     [
                         'id' => 'lJaHSbygvTM',
                         'snippet' => [
                             'title' => 'web developer',
                             'description' => '概要欄です。',
-                            'published_at' => '2025-12-08T12:00:00Z'
+                            'publishedAt' => '2025-12-08T12:00:00Z'
                         ],
                     ]
                 ]
