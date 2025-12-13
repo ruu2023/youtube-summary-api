@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\VideoResource;
 use App\Models\Video;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 
@@ -90,6 +91,7 @@ class VideoController extends Controller
 
         $video = Video::create([
             'user_id' => 1,
+            'video_id' => $videoId,
             'title' => $snippet['title'],
             'description' => $snippet['description'],
             'published_at' => date('Y-m-d H:i:s', strtotime($snippet['publishedAt'])),
@@ -98,6 +100,122 @@ class VideoController extends Controller
         return (new VideoResource($video))
             ->response()
             ->setStatusCode(201);
+    }
+
+    // channel import 
+    public function importChannel(Request $request) 
+    {
+        $validated = $request->validate([
+            'channel_id' => 'required|string',
+            'from' => 'required|date',
+            'to' => 'required|date'
+        ]);
+
+        $apiKey = config('services.youtube.key');
+        $channelId = $validated['channel_id'];
+
+        $params = [
+            'key' => $apiKey,
+            'part' => 'contentDetails'
+        ];
+
+        if(str_starts_with($channelId, '@'))
+        {
+            $params['forHandle'] = $channelId;
+        } else {
+            $params['id'] = $channelId;
+        }
+
+        // create carbon instance
+        $fromDate = Carbon::parse($validated['from'])->startOfDay();
+        $toDate = Carbon::parse($validated['to'])->endOfDay();
+
+        // 1. get playlist in channel's updated videos
+        $channelResponse = Http::get('https://www.googleapis.com/youtube/v3/channels', $params);
+
+        if($channelResponse->failed())
+        {
+            return response()->json(['error' => 'Channel API Error'], 500);
+        }
+
+        $channelItems = $channelResponse->json('items');
+        if(empty($channelItems))
+        {
+            return response()->json(['error' => 'Channel no found'], 404);
+        }
+
+        // get playlist ids
+        $uploadPlaylistId = $channelItems[0]['contentDetails']['relatedPlaylists']['uploads'];
+
+        // 2. get video details and filter by day
+        $nextPageToken = null;
+        $totalImported = 0;
+        $isFinished = false;
+
+        do {
+            $response = Http::get('https://www.googleapis.com/youtube/v3/playlistItems', [
+                'key' => $apiKey,
+                'playlistId' => $uploadPlaylistId,
+                'part' => 'snippet',
+                'maxResults' => 50,
+                'pageToken' => $nextPageToken
+            ]);
+
+            if($response->failed())
+            {
+                return response()->json(['error' => 'Playlist API Error'], 500);
+            }
+
+            $data = $response->json();
+            $items = $data['items'] ?? [];
+
+            foreach($items as $item)
+            {
+                $snippet =  $item['snippet'];
+                $publishedAt = Carbon::parse($snippet['publishedAt']);
+
+                // checkdate
+                // continue after to
+                if($publishedAt->gt($toDate))
+                {
+                    continue;
+                }
+
+                // break before from
+                if($publishedAt->lt($fromDate))
+                {
+                    $isFinished = true;
+                    break;
+                }
+
+                $videoId = $snippet['resourceId']['videoId'];
+
+                Video::updateOrCreate(
+                    ['videoId' => $videoId],
+                    [
+                        'video_id' => $videoId,
+                        'user_id' => 1,
+                        'title' => $snippet['title'],
+                        'description' => $snippet['description'],
+                        'published_at' => $publishedAt->format('Y-m-d H:i:s'),
+                    ]
+                    );
+
+                $totalImported++;
+            }
+
+            if($isFinished)
+            {
+                break;
+            }
+
+            $nextPageToken = $data['nextPageToken'] ?? null;
+        } while ($nextPageToken);
+
+        return response()->json([
+            'message' => 'Import process completed (Low Cost Model).',
+            'count' => $totalImported
+        ], 200);
     }
 }
     
