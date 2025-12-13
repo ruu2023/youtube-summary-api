@@ -17,11 +17,12 @@ class VideoFactory extends Factory
     public function definition(): array
     {
         return [
-            'video_id' => $this->faker->word(),
+            'video_id' => $this->faker->unique()->regexify('[a-zA-Z0-9_-]{11}'),
             'user_id' => 1,
             'title' => $this->faker->sentence,
             'description' => $this->faker->paragraph,
-            'published_at' => now()
+            'published_at' => $this->faker->dateTimeBetween('-1 year', 'now'),
+            'category' => $this->faker->randomElement(['雑談', 'ゲーム', '開発']),
         ];
     }
 }
