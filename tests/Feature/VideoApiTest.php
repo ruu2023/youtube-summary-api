@@ -18,10 +18,12 @@ class VideoApiTest extends TestCase
         // create dummy
         Video::factory()->create([
             'title' => 'testVideo1',
+            'video_id' => 'testId1',
             'user_id' => 1,
         ]);
         Video::factory()->create([
             'title' => 'testVideo2',
+            'video_id' => 'testId2',
             'user_id' => 1,
         ]);
 
@@ -40,6 +42,7 @@ class VideoApiTest extends TestCase
     {
         // data define
         $data = [
+            'video_id' => 'testId',
             'user_id' => 1,
             'title' => 'this is first post',
             'description' => 'dear coder, i\'ve started learning tdd',
@@ -63,6 +66,7 @@ class VideoApiTest extends TestCase
     {
         // create
         $video = Video::factory()->create([
+            'video_id' => 'testId',
             'title' => 'test title'
         ]);
 
@@ -99,10 +103,12 @@ class VideoApiTest extends TestCase
     {
         // define
         Video::factory()->create([
+            'video_id' => 'testId1',
             'title' => 'minecraft seed change',
             'description' => 'playing minecraft'
         ]);
         Video::factory()->create([
+            'video_id' => 'testId2',
             'title' => 'apex legends',
             'description' => 'playing apex'
         ]);

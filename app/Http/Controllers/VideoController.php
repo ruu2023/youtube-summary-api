@@ -32,6 +32,7 @@ class VideoController extends Controller
     {
         // validation
         $validated = $request->validate([
+            'video_id' => 'required|string|max:255',
             'user_id' => 'required|integer',
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
