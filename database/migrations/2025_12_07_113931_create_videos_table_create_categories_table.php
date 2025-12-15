@@ -11,16 +11,28 @@ return new class extends Migration
      */
     public function up(): void
     {
+        Schema::create('categories', function (Blueprint $table) {
+            $table->id();
+            $table->string('name')->unique();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->timestamps();
+        });
+        
         Schema::create('videos', function (Blueprint $table) {
             $table->id();
             $table->string('video_id')->unique();
-            $table->unsignedBigInteger('user_id');
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->string('title');
             $table->text('description');
-            $table->string('category')->nullable()->index();
+            // $table->string('category')->nullable()->index();
             $table->dateTime('published_at');
             $table->timestamps();
             $table->softDeletes();
+
+            $table->foreignId('category_id')
+                ->nullable()
+                ->constrained('categories')
+                ->nullOnDelete();
         });
     }
 
@@ -30,5 +42,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('videos');
+        Schema::dropIfExists('categories');
     }
 };

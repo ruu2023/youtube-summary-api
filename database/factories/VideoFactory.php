@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Category;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -22,7 +23,7 @@ class VideoFactory extends Factory
             'title' => $this->faker->sentence,
             'description' => $this->faker->paragraph,
             'published_at' => $this->faker->dateTimeBetween('-1 year', 'now'),
-            'category' => $this->faker->randomElement(['雑談', 'ゲーム', '開発']),
+            'category_id' => Category::factory()
         ];
     }
 }

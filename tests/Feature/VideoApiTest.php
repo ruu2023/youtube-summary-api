@@ -2,8 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\Category;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 use App\Models\Video;
 
@@ -59,6 +60,85 @@ class VideoApiTest extends TestCase
         ]);
     }
 
+
+    /**
+     * 動画を登録できる（カテゴリーあり）
+     */
+    public function test_it_can_store_a_video_with_category()
+    {
+        $user = User::factory()->create();
+        $category = Category::factory()->create(['name' => 'ゲーム']);
+
+        // request
+        $response = $this->actingAs($user)->postJson('/api/videos', [
+            'video_id' => 'newVideo1',
+            'title' => '新しい動画',
+            'description' => '概要欄です。',
+            'published_at' => '2025-01-01 10:00:00',
+            'category_id' => $category->id,
+        ]);
+
+        $response->assertStatus(201);
+
+        $this->assertDatabaseHas('videos', [
+            'video_id' => 'newVideo1',
+            'title' => '新しい動画',
+            'category_id' => $category->id
+
+        ]);
+    }
+
+    /**
+     * 動画の情報を更新できる
+     */
+    public function test_it_can_update_video()
+    {
+        $user = User::factory()->create();
+        $oldCategory = Category::factory()->create(['name' => '雑談']);
+        $video = Video::factory()->create([
+            'user_id' => $user->id,
+            'category_id' => $oldCategory->id
+        ]);
+
+        $newCategory = Category::factory()->create(['name' => '歌枠']);
+
+        // request
+        $response = $this->actingAs($user)->putJson("/api/videos/{$video->id}", [
+            'title' => 'タイトル変更',
+            'category_id' => $newCategory->id
+        ]);
+
+        $response->assertStatus(200);
+
+        $this->assertDatabaseHas('videos', [
+            'id' => $video->id,
+            'title' => 'タイトル変更',
+            'category_id' => $newCategory->id
+        ]);
+    }
+
+    /**
+     * 存在しないカテゴリーidを指定するとエラーになる。
+     */
+    public function test_it_cant_store_video_with_invalid_category_id()
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->postJson('/api/videos', [
+            'video_id' => 'error_video',
+            'user_id' => $user->id,
+            'title' => 'エラーテスト',
+            'published_at' => now(),
+            'category_id' => 9999
+        ]);
+
+        $response->assertStatus(422);
+
+        $response->assertJsonValidationErrors(['category_id']);
+    }
+
+
+
     /**
      * 動画の詳細を取得できる
      */
@@ -97,7 +177,7 @@ class VideoApiTest extends TestCase
 
     /**
      * 検索機能
-     * 指定の言葉がタイトル化概要欄に含まれている
+     * 指定の言葉がタイトルか概要欄に含まれている
      */
     public function test_it_can_search_videos_by_keyword()
     {
