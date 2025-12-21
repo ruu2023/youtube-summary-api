@@ -16,6 +16,12 @@ class VideoController extends Controller
     {
         $query = $request->user()->videos();
 
+        // category による絞り込み
+        if($categoryId = $request->input('category_id'))
+        {
+            $query->where('category_id', $categoryId);
+        }
+
         if($keyword = $request->input('q')) {
             $query->where(function ($q) use ($keyword) {
                 $q->where('title', 'like', "%{$keyword}%")
@@ -23,7 +29,15 @@ class VideoController extends Controller
             });
         }
 
-        $video = $query->latest('published_at')->get();
+        // paginate
+        $perPage = $request->input("limit", 20);
+
+        // safety limit
+        if($perPage > 100)
+        {
+            $perPage = 100;
+        }
+        $video = $query->latest('published_at')->paginate($perPage);
 
         return VideoResource::collection($video);
     }
@@ -138,7 +152,7 @@ class VideoController extends Controller
             'channel_id' => 'required|string',
             'from' => 'required|date',
             'to' => 'required|date',
-            'category_id' => 'nullable|integer|exists.categories,id'
+            'category_id' => 'nullable|integer|exists:categories,id'
         ]);
 
         $apiKey = config('services.youtube.key');
@@ -229,7 +243,7 @@ class VideoController extends Controller
                         'title' => $snippet['title'],
                         'description' => $snippet['description'],
                         'published_at' => $publishedAt->format('Y-m-d H:i:s'),
-                        'cateogry_id' => $validated['category_id'] ?? null
+                        'category_id' => $validated['category_id'] ?? null
                     ]);
 
                 $totalImported++;

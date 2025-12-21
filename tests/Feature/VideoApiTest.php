@@ -8,10 +8,6 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use App\Models\Video;
 
-
-
-//   ⨯ it can update video                                                                      0.01s
-//   ⨯ it cant store video with invalid category id    
 class VideoApiTest extends TestCase
 {
     use RefreshDatabase; // refresh db each test

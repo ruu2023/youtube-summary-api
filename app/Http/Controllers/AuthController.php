@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Hash;
 class AuthController extends Controller
 {
     /**
-     * Register a new user.
+     * regiseter a new user
      */
     public function register(Request $request)
     {
