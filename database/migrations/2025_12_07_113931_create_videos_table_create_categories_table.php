@@ -20,7 +20,7 @@ return new class extends Migration
         
         Schema::create('videos', function (Blueprint $table) {
             $table->id();
-            $table->string('video_id')->unique();
+            $table->string('video_id');
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->string('title');
             $table->text('description')->nullable();
@@ -33,6 +33,8 @@ return new class extends Migration
                 ->nullable()
                 ->constrained('categories')
                 ->nullOnDelete();
+            
+            $table->unique(['video_id', 'user_id']);
         });
     }
 

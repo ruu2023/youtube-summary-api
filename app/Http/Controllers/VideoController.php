@@ -89,6 +89,7 @@ class VideoController extends Controller
     {
         $validated = $request->validate([
             'video_id' => 'required|string',
+            'category_id' => 'nullable|integer|exists:categories,id'
         ]);
 
         $videoId = $validated['video_id'];
@@ -114,12 +115,15 @@ class VideoController extends Controller
 
         $snippet = $items[0]['snippet'];
 
-        $video = Video::create([
-            'user_id' => 1,
+        $video = Video::updateOrCreate([
             'video_id' => $videoId,
+            'user_id' => $request->user()->id,
+        ],
+        [
             'title' => $snippet['title'],
             'description' => $snippet['description'],
             'published_at' => date('Y-m-d H:i:s', strtotime($snippet['publishedAt'])),
+            'category_id'  => $validated['category_id'] ?? null,
         ]);
 
         return (new VideoResource($video))
@@ -133,7 +137,8 @@ class VideoController extends Controller
         $validated = $request->validate([
             'channel_id' => 'required|string',
             'from' => 'required|date',
-            'to' => 'required|date'
+            'to' => 'required|date',
+            'category_id' => 'nullable|integer|exists.categories,id'
         ]);
 
         $apiKey = config('services.youtube.key');
@@ -216,15 +221,16 @@ class VideoController extends Controller
                 $videoId = $snippet['resourceId']['videoId'];
 
                 Video::updateOrCreate(
-                    ['videoId' => $videoId],
                     [
                         'video_id' => $videoId,
-                        'user_id' => 1,
+                        'user_id' => $request->user()->id,
+                    ],
+                    [
                         'title' => $snippet['title'],
                         'description' => $snippet['description'],
                         'published_at' => $publishedAt->format('Y-m-d H:i:s'),
-                    ]
-                    );
+                        'cateogry_id' => $validated['category_id'] ?? null
+                    ]);
 
                 $totalImported++;
             }
