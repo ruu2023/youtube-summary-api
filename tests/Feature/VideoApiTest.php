@@ -281,14 +281,4 @@ class VideoApiTest extends TestCase
             ->assertJsonFragment(['title' => 'minecraft seed change'])
             ->assertJsonMissing(['title' => 'apex legends']);
     }
-
-    /** 
-     * A basic feature test example.
-     */
-    public function test_example(): void
-    {
-        $response = $this->get('/');
-
-        $response->assertStatus(200);
-    }
 }

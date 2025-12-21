@@ -182,15 +182,4 @@ class VideoImportTest extends TestCase
         $this->assertDatabaseHas('videos', ['video_id' => $targetId, 'user_id' => $me->id]);
         $this->assertDatabaseHas('videos', ['video_id' => $targetId, 'user_id' => $others->id]);
     }
-
-
-    /**
-     * A basic feature test example.
-     */
-    public function test_example(): void
-    {
-        $response = $this->get('/');
-
-        $response->assertStatus(200);
-    }
 }

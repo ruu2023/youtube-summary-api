@@ -112,7 +112,7 @@ Postmanなどでテストする際は、Headersに `Accept: application/json` �
 
 | メソッド | パス | 説明 |
 | --- | --- | --- |
-| GET | `/api/videos` | 動画一覧を取得 (パラメータ: `q` で検索可能) |
+| GET | `/api/videos` | 動画一覧を取得。フィルタリングとページネーション対応。<br>パラメータ:<br>- `q`: 検索キーワード (タイトル/説明)<br>- `category_id`: カテゴリーIDで絞り込み<br>- `limit`: 1ページあたりの件数 (デフォルト20, 最大100)<br>- `page`: ページネーション時のページ番号を指定 |
 | POST | `/api/videos` | 新しい動画を手動で登録 |
 | GET | `/api/videos/{video}` | 特定の動画の詳細を取得 |
 | PUT | `/api/videos/{video}` | 動画情報を更新 |
