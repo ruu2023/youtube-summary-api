@@ -1,66 +1,136 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# YouTube Summary API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+このプロジェクトは、YouTube Data APIを活用して動画情報を管理・収集するためのRESTful APIです。
+Laravel 11で構築されており、動画情報のCRUD操作、YouTubeからの動画情報の単一インポート、およびチャンネル指定による一括インポート機能を備えています。
 
-## About Laravel
+## 機能一覧
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- **認証**: Sanctumを使用したAPIトークン認証
+- **動画管理**:
+  - 動画一覧の取得（検索、ソート機能付き）
+  - 動画情報の詳細表示
+  - 動画情報の更新
+  - 動画情報の削除
+- **YouTube インポート機能**:
+  - **動画インポート**: YouTube動画IDを指定して、動画タイトル、説明、公開日などを自動取得して保存します。
+  - **チャンネルインポート**: チャンネルIDと期間（開始日・終了日）を指定して、その期間に公開された動画を一括でインポートします。API使用量を抑える最適化（PlaylistItems使用・日付フィルタリング）が施されています。
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 必要要件
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- PHP 8.2 以上
+- Laravel 11.x
+- Composer
 
-## Learning Laravel
+## セットアップ
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+1. リポジトリのクローン
+   ```bash
+   git clone <repository-url>
+   cd youtube-summary-api
+   ```
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+2. 依存関係のインストール
+   ```bash
+   composer install
+   ```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+3. 環境変数の設定
+   `.env.example` をコピーして `.env` を作成し、必要な設定を行ってください。特にデータベース接続とYouTube Data APIキーの設定が必要です。
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
 
-## Laravel Sponsors
+   **`.env` の設定項目 (追加):**
+   ```ini
+   YOUTUBE_API_KEY=your_youtube_api_key_here
+   ```
+   ※ `config/services.php` に以下のような設定が既に存在するか、追加する必要があります。
+   ```php
+   'youtube' => [
+       'key' => env('YOUTUBE_API_KEY'),
+   ],
+   ```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+4. データベースのマイグレーション
+   ```bash
+   php artisan migrate
+   ```
 
-### Premium Partners
+## 認証機能 (Authentication)
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+このAPIはLaravel Sanctumを使用したトークン認証を採用しています。「Route [login] not defined」エラーを回避し、APIとして正しく認証を行うためには、以下の手順でアクセストークンを取得してください。
 
-## Contributing
+Postmanなどでテストする際は、Headersに `Accept: application/json` を指定することを推奨します。
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### 1. ユーザー登録
+まずはユーザー登録を行い、アクセストークンを取得します。
 
-## Code of Conduct
+- **Endpoint**: `POST /api/register`
+- **Body**:
+  ```json
+  {
+    "name": "Test User",
+    "email": "test@example.com",
+    "password": "password",
+    "password_confirmation": "password"
+  }
+  ```
+- **Response**: アクセストークンが含まれます。
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### 2. ログイン
+登録済みのユーザーでログインし、新しいアクセストークンを取得します。
 
-## Security Vulnerabilities
+- **Endpoint**: `POST /api/login`
+- **Body**:
+  ```json
+  {
+    "email": "test@example.com",
+    "password": "password"
+  }
+  ```
+- **Response**: アクセストークンが含まれます。
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### 3. 認証付きリクエスト
+取得したトークンをヘッダーにセットしてAPIを利用します。
 
-## License
+- **Header**: `Authorization: Bearer <your_access_token>`
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## API エンドポイント
+
+全てのAPIリクエストには `Authorization: Bearer <token>` ヘッダーが必要です（認証関連のエンドポイントを除く）。
+
+### 認証 (Auth)
+
+| メソッド | パス | 説明 | パラメータ |
+| --- | --- | --- | --- |
+| POST | `/api/register` | ユーザー登録 | `name`, `email`, `password`, `password_confirmation` |
+| POST | `/api/login` | ログイン | `email`, `password` |
+| POST | `/api/logout` | ログアウト (トークン破棄) | - |
+
+### 動画リソース
+
+| メソッド | パス | 説明 |
+| --- | --- | --- |
+| GET | `/api/videos` | 動画一覧を取得 (パラメータ: `q` で検索可能) |
+| POST | `/api/videos` | 新しい動画を手動で登録 |
+| GET | `/api/videos/{video}` | 特定の動画の詳細を取得 |
+| PUT | `/api/videos/{video}` | 動画情報を更新 |
+| DELETE | `/api/videos/{video}` | 動画を削除 |
+
+### インポート
+
+| メソッド | パス | 説明 | パラメータ |
+| --- | --- | --- | --- |
+| POST | `/api/videos/import` | YouTube動画IDから動画をインポート | `video_id` (必須), `category_id` |
+| POST | `/api/videos/import/channel` | チャンネルから指定期間の動画を一括インポート | `channel_id` (必須, '@'ハンドル対応), `from` (必須: YYYY-MM-DD), `to` (必須: YYYY-MM-DD), `category_id` |
+
+### ユーザー
+
+| メソッド | パス | 説明 |
+| --- | --- | --- |
+| GET | `/api/user` | ログインユーザー情報を取得 |
+
+## ライセンス
+
+このプロジェクトは [MITライセンス](LICENSE) の元で公開されています。
