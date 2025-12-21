@@ -148,6 +148,7 @@ class VideoController extends Controller
     // channel import 
     public function importChannel(Request $request) 
     {
+        set_time_limit(120);
         $validated = $request->validate([
             'channel_id' => 'required|string',
             'from' => 'required|date',
