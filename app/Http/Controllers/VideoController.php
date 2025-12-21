@@ -6,6 +6,7 @@ use App\Http\Resources\VideoResource;
 use App\Models\Video;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Http;
 
 class VideoController extends Controller
@@ -13,7 +14,7 @@ class VideoController extends Controller
     // get
     public function index(Request $request) 
     {
-        $query = Video::query();
+        $query = $request->user()->videos();
 
         if($keyword = $request->input('q')) {
             $query->where(function ($q) use ($keyword) {
@@ -33,11 +34,13 @@ class VideoController extends Controller
         // validation
         $validated = $request->validate([
             'video_id' => 'required|string|max:255',
-            'user_id' => 'required|integer',
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'published_at' => 'required|date'
+            'published_at' => 'required|date',
+            'category_id' => 'nullable|integer|exists:categories,id'
         ]);
+        
+        $validated['user_id'] = $request->user()->id;
 
         $video = Video::create($validated);
 
@@ -49,12 +52,33 @@ class VideoController extends Controller
     // show
     public function show(Video $video)
     {
+        Gate::authorize('view', $video);
+        return new VideoResource($video);
+    }
+    
+    // update
+    public function update(Request $request, Video $video)
+    {
+        // 本人のデータチェック
+        Gate::authorize('update', $video);
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'published_at' => 'nullable|date',
+            'category_id' => 'nullable|integer|exists:categories,id'
+        ]);
+        
+        $video->update($validated);
+        
         return new VideoResource($video);
     }
 
     // destroy
     public function destroy(Video $video)
     {
+        Gate::authorize('delete', $video);
+        
         $video->delete();
         // 204
         return response()->noContent();

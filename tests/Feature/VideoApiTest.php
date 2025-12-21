@@ -8,49 +8,54 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use App\Models\Video;
 
+
+
+//   ⨯ it can update video                                                                      0.01s
+//   ⨯ it cant store video with invalid category id    
 class VideoApiTest extends TestCase
 {
     use RefreshDatabase; // refresh db each test
     /**
      * 動画一覧をJSONで取得できる
      */
-    public function it_can_fetch_list_of_videos()
+    public function test_it_can_fetch_list_of_videos()
     {
+        $me = User::factory()->create();
+        $others = User::factory()->create();
         // create dummy
         Video::factory()->create([
-            'title' => 'testVideo1',
-            'video_id' => 'testId1',
-            'user_id' => 1,
+            'user_id' => $me->id,
+            'title' => 'MyVideo',
         ]);
         Video::factory()->create([
-            'title' => 'testVideo2',
-            'video_id' => 'testId2',
-            'user_id' => 1,
+            'user_id' => $others->id,
+            'title' => 'OthersVideo',
         ]);
 
         // fetch api
-        $response = $this->getJson('/api/videos');
+        $response = $this->actingAs($me)->getJson('/api/videos');
 
         // assert
         $response->assertStatus(200)
-            ->assertJsonCount(2, 'data'); // expect 2 records
+            ->assertJsonCount(1, 'data') // expect 1 records
+            ->assertJsonPath('data.0.title', 'MyVideo');
     }
 
     /**
      * 動画を登録できる
      */
-    public function test_it_can_store_a_video()
+    public function test_it_can_store_a_video_no_category()
     {
+        $user = User::factory()->create();
         // data define
         $data = [
             'video_id' => 'testId',
-            'user_id' => 1,
             'title' => 'this is first post',
             'description' => 'dear coder, i\'ve started learning tdd',
             'published_at' => '2025-12-07 12:00:00'
         ];
 
-        $response = $this->postJson('/api/videos', $data);
+        $response = $this->actingAs($user)->postJson('/api/videos', $data);
 
         $response->assertStatus(201)
             ->assertJsonFragment(['title' => 'this is first post']);
@@ -81,10 +86,9 @@ class VideoApiTest extends TestCase
         $response->assertStatus(201);
 
         $this->assertDatabaseHas('videos', [
+            'user_id' => $user->id,
             'video_id' => 'newVideo1',
-            'title' => '新しい動画',
             'category_id' => $category->id
-
         ]);
     }
 
@@ -116,9 +120,36 @@ class VideoApiTest extends TestCase
             'category_id' => $newCategory->id
         ]);
     }
+    
+    /**
+     * 他の人の動画を更新できない
+     */
+    public function test_it_cant_update_others_video()
+    {
+        $me = User::factory()->create();
+        $others = User::factory()->create();
+        $category = Category::factory()->create();
+        $video = Video::factory()->create([
+            'user_id' => $me->id,
+            'title' => 'タイトル',
+            'category_id' => $category->id
+        ]);
+        
+        $response = $this->actingAs($others)->putJson("/api/videos/{$video->id}", [
+            'title' => 'タイトル変更'
+        ]);
+
+        $response->assertStatus(403);
+        
+        $this->assertDatabaseHas('videos', [
+            'id' => $video->id,
+            'title' => 'タイトル',
+            'category_id' => $category->id
+        ]);
+    }
 
     /**
-     * 存在しないカテゴリーidを指定するとエラーになる。
+     * 存在しないカテゴリーidを指定するとエラーになる。(store)
      */
     public function test_it_cant_store_video_with_invalid_category_id()
     {
@@ -126,9 +157,31 @@ class VideoApiTest extends TestCase
 
         $response = $this->actingAs($user)->postJson('/api/videos', [
             'video_id' => 'error_video',
-            'user_id' => $user->id,
             'title' => 'エラーテスト',
-            'published_at' => now(),
+            'published_at' => now()->toDateString(),
+            'category_id' => 9999
+        ]);
+
+        $response->assertStatus(422);
+
+        $response->assertJsonValidationErrors(['category_id']);
+    }
+
+    /**
+     * 存在しないカテゴリーidを指定するとエラーになる。(update)
+     */
+    public function test_it_cant_update_video_with_invalid_category_id()
+    {
+        $user = User::factory()->create();
+        $category = Category::factory()->create();
+        $video = Video::factory()->create([
+            'user_id' => $user->id,
+            'category_id' => $category->id
+        ]);
+
+        $response = $this->actingAs($user)->putJson("/api/videos/{$video->id}", [
+            'title' => 'エラーテスト',
+            'published_at' => now()->toDateString(),
             'category_id' => 9999
         ]);
 
@@ -138,20 +191,22 @@ class VideoApiTest extends TestCase
     }
 
 
-
     /**
      * 動画の詳細を取得できる
      */
     public function test_it_can_fetch_single_video()
     {
+        $user = User::factory()->create();
+
         // create
         $video = Video::factory()->create([
+            'user_id' => $user->id,
             'video_id' => 'testId',
             'title' => 'test title'
         ]);
 
         // fetch a video
-        $response = $this->getJson("/api/videos/{$video->id}");
+        $response = $this->actingAs($user)->getJson("/api/videos/{$video->id}");
 
         $response->assertStatus(200)
             ->assertJson([
@@ -167,12 +222,39 @@ class VideoApiTest extends TestCase
      */
     public function test_it_can_delete_a_video()
     {
-        $video = Video::factory()->create();
+        $user = User::factory()->create();
+        $video = Video::factory()->create(['user_id' => $user->id]);
 
-        $response = $this->deleteJson("/api/videos/{$video->id}"); 
+        $response = $this->actingAs($user)->deleteJson("/api/videos/{$video->id}"); 
         $response->assertStatus(204);
 
         $this->assertDatabaseMissing('videos', ['id' => $video->id]);
+    }
+
+
+    /**
+     * 他の人の動画を削除できない
+     */
+    public function test_it_cant_delete_others_video()
+    {
+        $me = User::factory()->create();
+        $others = User::factory()->create();
+        $category = Category::factory()->create();
+        $video = Video::factory()->create([
+            'user_id' => $me->id,
+            'title' => 'タイトル',
+            'category_id' => $category->id
+        ]);
+        
+        $response = $this->actingAs($others)->deleteJson("/api/videos/{$video->id}");
+
+        $response->assertStatus(403);
+        
+        $this->assertDatabaseHas('videos', [
+            'id' => $video->id,
+            'title' => 'タイトル',
+            'category_id' => $category->id
+        ]);
     }
 
     /**
@@ -181,19 +263,22 @@ class VideoApiTest extends TestCase
      */
     public function test_it_can_search_videos_by_keyword()
     {
+        $user = User::factory()->create();
         // define
         Video::factory()->create([
+            'user_id' => $user->id,
             'video_id' => 'testId1',
             'title' => 'minecraft seed change',
             'description' => 'playing minecraft'
         ]);
         Video::factory()->create([
+            'user_id' => $user->id,
             'video_id' => 'testId2',
             'title' => 'apex legends',
             'description' => 'playing apex'
         ]);
 
-        $response = $this->getJson('/api/videos?q=mine');
+        $response = $this->actingAs($user)->getJson('/api/videos?q=mine');
 
         $response->assertStatus(200)
             ->assertJsonCount(1, 'data')

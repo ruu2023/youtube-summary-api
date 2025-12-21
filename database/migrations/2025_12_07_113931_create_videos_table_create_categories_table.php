@@ -23,7 +23,7 @@ return new class extends Migration
             $table->string('video_id')->unique();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->string('title');
-            $table->text('description');
+            $table->text('description')->nullable();
             // $table->string('category')->nullable()->index();
             $table->dateTime('published_at');
             $table->timestamps();
