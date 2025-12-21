@@ -1,0 +1,77 @@
+@BASE_URL = http://localhost:8000
+
+# Group: Auth
+
+###
+# @name register
+POST {{BASE_URL}}/api/register
+Accept: application/json
+Content-Type: application/json
+
+{
+    "name" : "aaa",
+    "email" : "aaa@mail",
+    "password": "aaaaaaaa",
+    "password_confirmation": "aaaaaaaa"
+}
+
+###
+# @name login
+POST {{BASE_URL}}/api/login
+Accept: application/json
+Content-Type: application/json
+
+{
+    "email" : "aaa@mail",
+    "password": "aaaaaaaa"
+}
+
+{{
+    $global.token = response.parsedBody.access_token
+}}
+
+# Group: youtubeAPI
+
+###
+# @name importByVideoId
+POST {{BASE_URL}}/api/videos/import
+Authorization: Bearer {{login.access_token}}
+Content-Type: application/json
+
+{
+    "video_id": "lJaHSbygvTM"
+}
+
+###
+# @name importByChannelId
+POST {{BASE_URL}}/api/videos/import/channel
+Authorization: Bearer {{login.access_token}}
+Content-Type: application/json
+
+{
+    "channel_id": "@miyanoyami",
+    "from": "2025-01-01",
+    "to": "2025-12-01"
+}
+
+# Group: unit
+
+###
+# @name videos
+POST {{BASE_URL}}/api/videos
+Accept: application/json
+Authorization: Bearer {{login.access_token}}
+Content-Type: application/json
+
+{
+    "video_id" : "testtesttesttest",
+    "title": "second test",
+    "description": "test description",
+    "published_at": "2025-12-08 12:00:00"
+}
+
+###
+# @name getVideos
+GET {{BASE_URL}}/api/videos?q=&category_id=&limit=&page=
+Accept: application/json
+Authorization: Bearer {{login.access_token}}
