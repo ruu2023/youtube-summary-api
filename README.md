@@ -128,10 +128,13 @@ php artisan db:seed
 
 ### カテゴリーリソース
 
-| メソッド | パス | 説明 |
-| --- | --- | --- |
-| GET | `/api/categories` | カテゴリー一覧を取得 (ユーザーごと) |
-| POST | `/api/categories` | カテゴリーを作成 |
+| メソッド | パス | 説明 | パラメータ |
+| --- | --- | --- | --- |
+| GET | `/api/categories` | カテゴリー一覧を取得 (ユーザーごと) | - |
+| POST | `/api/categories` | カテゴリーを作成 | `name`, `keywords` (array) |
+| GET | `/api/categories/{id}` | カテゴリー詳細を取得 | - |
+| PUT | `/api/categories/{id}` | カテゴリーを更新 | `name`, `keywords` |
+| DELETE | `/api/categories/{id}` | カテゴリーを削除 | - |
 
 ### インポート
 

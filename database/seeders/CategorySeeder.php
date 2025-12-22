@@ -24,21 +24,26 @@ class CategorySeeder extends Seeder
         ]);
 
         $categories = [
-            '雑談',
-            'ゲーム',
-            '歌枠',
-            'ASMR',
-            'コラボ',
-            '告知',
-            'マシュマロ',
-            '記念配信'
+            '雑談' => ['雑談', '喋る', '話す', '報告', 'お知らせ'],
+            'ゲーム' => ['Game', 'ゲーム', 'PLAY', '実況', '配信', 'APEX', 'Minecraft', 'Pokemon', 'ポケモン'],
+            '歌枠' => ['SINGING', '歌枠', '歌う', 'KARAOKE' , 'カラオケ'],
+            'ASMR' => ['ASMR', 'バイノーラル', '囁き', 'KU-100'],
+            'コラボ' => ['コラボ', 'COLLAB', 'GUEST'],
+            '告知' => ['告知', '重大', '発表', 'お知らせ'],
+            'マシュマロ' => ['マシュマロ', 'Marshmallow', '質問'],
+            '記念配信' => ['記念', '周年', '万人', 'Birthday', '誕生日']
         ];
 
-        foreach($categories as $name) {
-            Category::firstOrCreate([
-                'name' => $name,
-                'user_id' => $user->id
-            ]);
+        foreach($categories as $name => $keywords) {
+            Category::updateOrCreate(
+                [
+                    'name' => $name,
+                    'user_id' => $user->id
+                ],
+                [
+                    'keywords' => $keywords
+                ]
+            );
         }
     }
 }

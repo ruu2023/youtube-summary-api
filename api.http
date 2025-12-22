@@ -22,8 +22,8 @@ Accept: application/json
 Content-Type: application/json
 
 {
-    "email" : "aaa@mail",
-    "password": "aaaaaaaa"
+    "email" : "test@example.com",
+    "password": "password"
 }
 
 {{
@@ -57,7 +57,7 @@ Content-Type: application/json
 # Group: unit
 
 ###
-# @name videos
+# @name createVideo
 POST {{BASE_URL}}/api/videos
 Accept: application/json
 Authorization: Bearer {{login.access_token}}
@@ -72,7 +72,7 @@ Content-Type: application/json
 
 ###
 # @name getVideos
-GET {{BASE_URL}}/api/videos?q=&category_id=&limit=&page=
+GET {{BASE_URL}}/api/videos?q=つよつよ&category_id=&limit=&page=
 Accept: application/json
 Authorization: Bearer {{login.access_token}}
 
@@ -92,5 +92,30 @@ Authorization: Bearer {{login.access_token}}
 Content-Type: application/json
 
 {
-    "name": "Game"
+    "name": "Game",
+    "keywords": ["Minecraft", "Valorant"]
 }
+
+###
+# @name getCategory
+GET {{BASE_URL}}/api/categories/1
+Accept: application/json
+Authorization: Bearer {{login.access_token}}
+
+###
+# @name updateCategory
+PUT {{BASE_URL}}/api/categories/1
+Accept: application/json
+Authorization: Bearer {{login.access_token}}
+Content-Type: application/json
+
+{
+    "name": "Updated Game",
+    "keywords": ["Apex", "Overwatch"]
+}
+
+###
+# @name deleteCategory
+DELETE {{BASE_URL}}/api/categories/1
+Accept: application/json
+Authorization: Bearer {{login.access_token}}

@@ -9,8 +9,18 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Http;
 
+use App\Models\Category;
+use App\Services\CategoryMatcherService;
+
 class VideoController extends Controller
 {
+    protected $categoryMatcher;
+
+    public function __construct(CategoryMatcherService $categoryMatcher)
+    {
+        $this->categoryMatcher = $categoryMatcher;
+    }
+
     // get
     public function index(Request $request) 
     {
@@ -129,6 +139,13 @@ class VideoController extends Controller
 
         $snippet = $items[0]['snippet'];
 
+        // Auto categorization if null
+        $categoryId = $validated['category_id'] ?? null;
+        if(is_null($categoryId)) {
+            $userCategories = Category::where('user_id', $request->user()->id)->get();
+            $categoryId = $this->categoryMatcher->match($snippet['title'], $snippet['description'], $userCategories);
+        }
+
         $video = Video::updateOrCreate([
             'video_id' => $videoId,
             'user_id' => $request->user()->id,
@@ -137,7 +154,7 @@ class VideoController extends Controller
             'title' => $snippet['title'],
             'description' => $snippet['description'],
             'published_at' => date('Y-m-d H:i:s', strtotime($snippet['publishedAt'])),
-            'category_id'  => $validated['category_id'] ?? null,
+            'category_id'  => $categoryId,
         ]);
 
         return (new VideoResource($video))
@@ -197,6 +214,7 @@ class VideoController extends Controller
         $totalImported = 0;
         $isFinished = false;
 
+        $userCategories = Category::where('user_id', $request->user()->id)->get();
         $videos = [];
 
         do {
@@ -237,24 +255,19 @@ class VideoController extends Controller
 
                 $videoId = $snippet['resourceId']['videoId'];
 
-                // Video::updateOrCreate(
-                //     [
-                //         'video_id' => $videoId,
-                //         'user_id' => $request->user()->id,
-                //     ],
-                //     [
-                //         'title' => $snippet['title'],
-                //         'description' => $snippet['description'],
-                //         'published_at' => $publishedAt->format('Y-m-d H:i:s'),
-                //         'category_id' => $validated['category_id'] ?? null
-                //     ]);
+                // Auto Categorization
+                $categoryId = $validated['category_id'] ?? null;
+                if(is_null($categoryId)) {
+                     $categoryId = $this->categoryMatcher->match($snippet['title'], $snippet['description'], $userCategories);
+                }
+
                 $videos[] = [
                     'video_id' => $videoId,
                     'user_id' => $request->user()->id,
                     'title' => $snippet['title'],
                     'description' => $snippet['description'],
                     'published_at' => $publishedAt->format('Y-m-d H:i:s'),
-                    'category_id' => $validated['category_id'] ?? null
+                    'category_id' => $categoryId
                 ];
                     
                 $totalImported++;
