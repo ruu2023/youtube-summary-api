@@ -118,6 +118,13 @@ Postmanなどでテストする際は、Headersに `Accept: application/json` �
 | PUT | `/api/videos/{video}` | 動画情報を更新 |
 | DELETE | `/api/videos/{video}` | 動画を削除 |
 
+### カテゴリーリソース
+
+| メソッド | パス | 説明 |
+| --- | --- | --- |
+| GET | `/api/categories` | カテゴリー一覧を取得 (ユーザーごと) |
+| POST | `/api/categories` | カテゴリーを作成 |
+
 ### インポート
 
 | メソッド | パス | 説明 | パラメータ |

@@ -224,7 +224,7 @@ class VideoApiTest extends TestCase
         $response = $this->actingAs($user)->deleteJson("/api/videos/{$video->id}"); 
         $response->assertStatus(204);
 
-        $this->assertDatabaseMissing('videos', ['id' => $video->id]);
+        $this->assertSoftDeleted('videos', ['id' => $video->id]);
     }
 
 

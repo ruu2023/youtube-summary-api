@@ -197,6 +197,8 @@ class VideoController extends Controller
         $totalImported = 0;
         $isFinished = false;
 
+        $videos = [];
+
         do {
             $response = Http::get('https://www.googleapis.com/youtube/v3/playlistItems', [
                 'key' => $apiKey,
@@ -235,29 +237,39 @@ class VideoController extends Controller
 
                 $videoId = $snippet['resourceId']['videoId'];
 
-                Video::updateOrCreate(
-                    [
-                        'video_id' => $videoId,
-                        'user_id' => $request->user()->id,
-                    ],
-                    [
-                        'title' => $snippet['title'],
-                        'description' => $snippet['description'],
-                        'published_at' => $publishedAt->format('Y-m-d H:i:s'),
-                        'category_id' => $validated['category_id'] ?? null
-                    ]);
-
+                // Video::updateOrCreate(
+                //     [
+                //         'video_id' => $videoId,
+                //         'user_id' => $request->user()->id,
+                //     ],
+                //     [
+                //         'title' => $snippet['title'],
+                //         'description' => $snippet['description'],
+                //         'published_at' => $publishedAt->format('Y-m-d H:i:s'),
+                //         'category_id' => $validated['category_id'] ?? null
+                //     ]);
+                $videos[] = [
+                    'video_id' => $videoId,
+                    'user_id' => $request->user()->id,
+                    'title' => $snippet['title'],
+                    'description' => $snippet['description'],
+                    'published_at' => $publishedAt->format('Y-m-d H:i:s'),
+                    'category_id' => $validated['category_id'] ?? null
+                ];
+                    
                 $totalImported++;
             }
-
+            
             if($isFinished)
             {
                 break;
             }
-
+                    
             $nextPageToken = $data['nextPageToken'] ?? null;
         } while ($nextPageToken);
 
+        Video::upsert($videos, ['video_id', 'user_id'], ['title', 'description', 'published_at', 'category_id']);
+                
         return response()->json([
             'message' => 'Import process completed (Low Cost Model).',
             'count' => $totalImported
