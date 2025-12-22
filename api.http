@@ -75,3 +75,22 @@ Content-Type: application/json
 GET {{BASE_URL}}/api/videos?q=&category_id=&limit=&page=
 Accept: application/json
 Authorization: Bearer {{login.access_token}}
+
+# Group: Category
+
+###
+# @name getCategories
+GET {{BASE_URL}}/api/categories
+Accept: application/json
+Authorization: Bearer {{login.access_token}}
+
+###
+# @name createCategory
+POST {{BASE_URL}}/api/categories
+Accept: application/json
+Authorization: Bearer {{login.access_token}}
+Content-Type: application/json
+
+{
+    "name": "Game"
+}

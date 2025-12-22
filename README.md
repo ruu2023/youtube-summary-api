@@ -96,6 +96,14 @@ Postmanなどでテストする際は、Headersに `Accept: application/json` �
 
 - **Header**: `Authorization: Bearer <your_access_token>`
 
+### 初期データ投入
+
+標準的なカテゴリー（雑談、ゲーム、等）を初期データとして登録できます。
+
+```bash
+php artisan db:seed
+```
+
 ## API エンドポイント
 
 全てのAPIリクエストには `Authorization: Bearer <token>` ヘッダーが必要です（認証関連のエンドポイントを除く）。
